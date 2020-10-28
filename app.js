@@ -1,5 +1,5 @@
-const express = require("express");
-const app = express();
+// const express = require("express");
+// const app = express();
 const mysql = require("mysql");
 const inquirer = require("inquirer");
 
@@ -7,7 +7,7 @@ var connection = mysql.createConnection({
     host: "localhost",
 
     // Port
-    port: 3000,
+    port: 3306,
 
     // Your username
     user: "root",
@@ -24,16 +24,6 @@ connection.connect(function (err) {
     userPrompts();
 });
 
-// userPrompt
-    // view all employees => console.table all employees
-    // view employees by department => list departments and then console.table all employees from that department
-        // first join employees by roles and then join roles to departments
-    // view employees by manager => list all managers and then console.table all employees under that manager
-    // add a new employee => ask for: first name, last name, role, manager, then update table and console.table()
-    // delete a employee => lists all employees so user can choice which to delete
-    // update employee role => list all employees and ask what role user would like to change the selected employee 
-    // update employee manager => ask which employee user would like to change to a manager & list all employees    
-
 function userPrompts() {
     inquirer.prompt([{
         type: "list",
@@ -46,7 +36,8 @@ function userPrompts() {
             "Delete an employee",
             "Update employee role",
             "Update employee manager",
-            "All done!"]
+            "All done!"
+        ]
     }]).then(function (data) {
         if (data.userPrompts === "View all employees") {
             viewAllEmployees();
@@ -73,7 +64,6 @@ function viewAllEmployees() {
     connection.query("SELECT * FROM employees", function (err, res) {
         if (err) throw err;
         console.table(res);
-
     })
     userPrompts();
 };
@@ -81,8 +71,39 @@ function viewAllEmployees() {
 function viewByDepartment() {
     // view employees by department => list departments and then console.table all employees from that department
     // first join employees by roles and then join roles to departments
-
-    userPrompts();
+    inquirer.prompt([{
+        type: "list",
+        name: "departments",
+        message: "Which department would you like to view?",
+        choices: ["Sales", "Engineering", "Finance", "Legal"]
+    }]).then(function (data) {
+        if (data.departments === "Sales") {
+            connection.query("SELECT * FROM employees INNER JOIN roles on employees.role_id=roles.role_id INNER JOIN departments on roles.department_id=departments.department_id WHERE departments.department_id=1", function (err, res) {
+                if (err) throw err;
+                console.table(res);
+                // connection.end();
+                userPrompts();
+            });
+        } else if (data.departments === "Engineering") {
+            connection.query("SELECT * FROM employees INNER JOIN roles on employees.role_id=roles.role_id INNER JOIN departments on roles.department_id=departments.department_id WHERE departments.department_id=2", function (err, res) {
+                if (err) throw err;
+                console.table(res);
+                userPrompts();
+            });
+        } else if (data.departments === "Finance") {
+            connection.query("SELECT * FROM employees INNER JOIN roles on employees.role_id=roles.role_id INNER JOIN departments on roles.department_id=departments.department_id WHERE departments.department_id=3", function (err, res) {
+                if (err) throw err;
+                console.table(res);
+                userPrompts();
+            });
+        } else {
+            connection.query("SELECT * FROM employees INNER JOIN roles on employees.role_id=roles.role_id INNER JOIN departments on roles.department_id=departments.department_id WHERE departments.department_id=4", function (err, res) {
+                if (err) throw err;
+                console.table(res);
+                userPrompts();
+            });
+        }
+    });
 };
 
 function viewByManager() {
@@ -93,8 +114,37 @@ function viewByManager() {
 
 function addEmployee() {
     // add a new employee => ask for: first name, last name, role, manager, then update table and console.table()
+    inquirer.prompt([{
+        type: "input",
+        name: "newEmployeeFirstName",
+        message: "What is the first name of the employee?"
+    }, {
+        type: "input",
+        name: "newEmployeeLastName",
+        message: "What is the last name of the employee?"
+    }, {
+        type: "list",
+        name: "newEmployeeRole",
+        message: "What is the role of the employee?",
+        choices: ["Salesperson", "Lawyer", "Accountant", "Lead Engineer", "Software Engineer"]
+    }, {
+        type: "list",
+        name: "newEmployeeManager",
+        message: "Who is the manager of the employee?",
+        choices: [""]
+    }]).then(function (data) {
+        connection.query("INSERT INTO employees SET ?", {
+            firstName: data.newEmployeeFirstName,
+            lastName: data.newEmployeeLastName,
+            // roles.title: data.newEmployeeRole,
 
-    userPrompts();
+                
+            },
+            function (err) {
+                if (err) throw err;
+                console.table(res);
+            })
+    })
 };
 
 function deleteEmployee() {
