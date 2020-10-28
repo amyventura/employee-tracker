@@ -20,7 +20,7 @@ var connection = mysql.createConnection({
 connection.connect(function (err) {
     if (err) throw err;
     console.log("connected as id " + connection.threadId + "\n");
-
+    
     userPrompts();
 });
 
@@ -108,11 +108,26 @@ function viewByDepartment() {
 
 function viewByManager() {
     // view employees by manager => list all managers and then console.table all employees under that manager
-
+        
     userPrompts();
 };
 
 function addEmployee() {
+    var manager =[];
+    connection.query("SELECT CONCAT(firstName, ' ', lastName) as 'manager', employee_id FROM employees where employee_id in (SELECT distinct manager_id FROM employees)", function (err, res) {
+        if (err) throw err;
+        
+        for (var i=0; i<res.length; i++){
+            manager.push(res[i].employee_id + '. ' + res[i].manager)
+        }
+    });
+    var roles = [];
+    connection.query("SELECT DISTINCT roles.role_id, roles.title FROM  `roles` , employees WHERE roles.role_id = employees.role_id", function (err, res) {
+        if (err) throw err;
+        for (var i=0; i<res.length; i++){
+            roles.push(res[i].role_id + '. ' + res[i].title)
+        }
+    });
     // add a new employee => ask for: first name, last name, role, manager, then update table and console.table()
     inquirer.prompt([{
         type: "input",
@@ -126,19 +141,20 @@ function addEmployee() {
         type: "list",
         name: "newEmployeeRole",
         message: "What is the role of the employee?",
-        choices: ["Salesperson", "Lawyer", "Accountant", "Lead Engineer", "Software Engineer"]
+        choices: roles
     }, {
         type: "list",
         name: "newEmployeeManager",
         message: "Who is the manager of the employee?",
-        choices: [""]
+        choices: manager
     }]).then(function (data) {
+        var parsedRole = split(data.newEmployeeRole, ".")
+        var parsedManager = split(data.newEmployeeManager, ".")
         connection.query("INSERT INTO employees SET ?", {
             firstName: data.newEmployeeFirstName,
             lastName: data.newEmployeeLastName,
-            // roles.title: data.newEmployeeRole,
-
-                
+            role: parsedRole [0],
+            manager: parsedManager[0],
             },
             function (err) {
                 if (err) throw err;
