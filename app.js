@@ -1,92 +1,116 @@
-var mysql = require("mysql");
+const express = require("express");
+const app = express();
+const mysql = require("mysql");
+const inquirer = require("inquirer");
 
 var connection = mysql.createConnection({
-  host: "localhost",
+    host: "localhost",
 
-  // Port
-  port: 3000,
+    // Port
+    port: 3000,
 
-  // Your username
-  user: "root",
+    // Your username
+    user: "root",
 
-  // Your password
-  password: "",
-  database: "i"
+    // Your password
+    password: "WhatTheFuckMan26!",
+    database: "employee_tracker_db"
 });
 
-connection.connect(function(err) {
-  if (err) throw err;
-  console.log("connected as id " + connection.threadId + "\n");
-  
+connection.connect(function (err) {
+    if (err) throw err;
+    console.log("connected as id " + connection.threadId + "\n");
+
+    userPrompts();
 });
 
-// function createProduct() {
-//   console.log("Inserting a new product...\n");
-//   var query = connection.query(
-//     "INSERT INTO products SET ?",
-//     {
-//       flavor: "Rocky Road",
-//       price: 3.0,
-//       quantity: 50
-//     },
-//     function(err, res) {
-//       if (err) throw err;
-//       console.log(res.affectedRows + " product inserted!\n");
-//       // Call updateProduct AFTER the INSERT completes
-//       updateProduct();
-//     }
-//   );
+// userPrompt
+    // view all employees => console.table all employees
+    // view employees by department => list departments and then console.table all employees from that department
+        // first join employees by roles and then join roles to departments
+    // view employees by manager => list all managers and then console.table all employees under that manager
+    // add a new employee => ask for: first name, last name, role, manager, then update table and console.table()
+    // delete a employee => lists all employees so user can choice which to delete
+    // update employee role => list all employees and ask what role user would like to change the selected employee 
+    // update employee manager => ask which employee user would like to change to a manager & list all employees    
 
-//   // logs the actual query being run
-//   console.log(query.sql);
-// }
+function userPrompts() {
+    inquirer.prompt([{
+        type: "list",
+        name: "userPrompts",
+        message: "What would you like to do?",
+        choices: ["View all employees",
+            "View employees by department",
+            "View employees by manager",
+            "Add a new employee",
+            "Delete an employee",
+            "Update employee role",
+            "Update employee manager",
+            "All done!"]
+    }]).then(function (data) {
+        if (data.userPrompts === "View all employees") {
+            viewAllEmployees();
+        } else if (data.userPrompts === "View employees by department") {
+            viewByDepartment();
+        } else if (data.userPrompts === "View employees by manager") {
+            viewByManager();
+        } else if (data.userPrompts === "Add a new employee") {
+            addEmployee();
+        } else if (data.userPrompts === "Delete an employee") {
+            deleteEmployee();
+        } else if (data.userPrompts === "Update employee role") {
+            updateEmployeeRole();
+        } else if (data.userPrompts === "Update employee manager") {
+            updateManager();
+        } else {
+            connection.end();
+        }
+    });
+};
 
-// function updateProduct() {
-//   console.log("Updating all Rocky Road quantities...\n");
-//   var query = connection.query(
-//     "UPDATE products SET ? WHERE ?",
-//     [
-//       {
-//         quantity: 100
-//       },
-//       {
-//         flavor: "Rocky Road"
-//       }
-//     ],
-//     function(err, res) {
-//       if (err) throw err;
-//       console.log(res.affectedRows + " products updated!\n");
-//       // Call deleteProduct AFTER the UPDATE completes
-//       deleteProduct();
-//     }
-//   );
+function viewAllEmployees() {
+    // view all employees => console.table all employees
+    connection.query("SELECT * FROM employees", function (err, res) {
+        if (err) throw err;
+        console.table(res);
 
-//   // logs the actual query being run
-//   console.log(query.sql);
-// }
+    })
+    userPrompts();
+};
 
-// function deleteProduct() {
-//   console.log("Deleting all strawberry icecream...\n");
-//   connection.query(
-//     "DELETE FROM products WHERE ?",
-//     {
-//       flavor: "strawberry"
-//     },
-//     function(err, res) {
-//       if (err) throw err;
-//       console.log(res.affectedRows + " products deleted!\n");
-//       // Call readProducts AFTER the DELETE completes
-//       readProducts();
-//     }
-//   );
-// }
+function viewByDepartment() {
+    // view employees by department => list departments and then console.table all employees from that department
+    // first join employees by roles and then join roles to departments
 
-// function readProducts() {
-//   console.log("Selecting all products...\n");
-//   connection.query("SELECT * FROM products", function(err, res) {
-//     if (err) throw err;
-//     // Log all results of the SELECT statement
-//     console.log(res);
-//     connection.end();
-//   });
-// }
+    userPrompts();
+};
+
+function viewByManager() {
+    // view employees by manager => list all managers and then console.table all employees under that manager
+
+    userPrompts();
+};
+
+function addEmployee() {
+    // add a new employee => ask for: first name, last name, role, manager, then update table and console.table()
+
+    userPrompts();
+};
+
+function deleteEmployee() {
+    // delete a employee => lists all employees so user can choice which to delete
+
+    userPrompts();
+};
+
+function updateEmployeeRole() {
+    // update employee role => list all employees and ask what role user would like to change the selected employee 
+
+    userPrompts();
+};
+
+function updateManager() {
+    // update employee manager => ask which employee user would like to change to a manager & list all employees 
+
+    userPrompts();
+};
