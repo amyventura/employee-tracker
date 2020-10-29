@@ -13,7 +13,7 @@ var connection = mysql.createConnection({
     user: "root",
 
     // Your password
-    password: "WhatTheFuckMan26!",
+    password: "",
     database: "employee_tracker_db"
 });
 
@@ -64,7 +64,10 @@ function viewAllEmployees() {
     connection.query("SELECT * FROM employees", function (err, res) {
         if (err) throw err;
         console.table(res);
+    //     console.log(res[i].firstName + " | " + res[i].lastName + " | " + res[i].role.title + " | " + res[i].departments.title +" | " + res[i].manager);
     })
+    // console.log("-----------------------------------");
+    
     userPrompts();
 };
 
@@ -108,7 +111,7 @@ function viewByDepartment() {
 
 function viewByManager() {
     // view employees by manager => list all managers and then console.table all employees under that manager
-        
+
     userPrompts();
 };
 
@@ -148,17 +151,18 @@ function addEmployee() {
         message: "Who is the manager of the employee?",
         choices: manager
     }]).then(function (data) {
-        var parsedRole = split(data.newEmployeeRole, ".")
-        var parsedManager = split(data.newEmployeeManager, ".")
+        var parsedRole = data.newEmployeeRole.split(".");
+        var parsedManager = data.newEmployeeManager.split(".");
         connection.query("INSERT INTO employees SET ?", {
             firstName: data.newEmployeeFirstName,
             lastName: data.newEmployeeLastName,
-            role: parsedRole [0],
-            manager: parsedManager[0],
+            role_id: parsedRole [0],
+            manager_id: parsedManager[0],
             },
             function (err) {
                 if (err) throw err;
-                console.table(res);
+                console.log('employee added');
+                userPrompts();
             })
     })
 };
