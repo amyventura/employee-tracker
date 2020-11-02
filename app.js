@@ -1,7 +1,8 @@
-// const express = require("express");
-// const app = express();
 const mysql = require("mysql");
 const inquirer = require("inquirer");
+const {
+    clear
+} = require("console");
 
 var connection = mysql.createConnection({
     host: "localhost",
@@ -13,18 +14,19 @@ var connection = mysql.createConnection({
     user: "root",
 
     // Your password
-    password: "",
+    password: "WhatTheFuckMan26!",
     database: "employee_tracker_db"
 });
 
 connection.connect(function (err) {
     if (err) throw err;
     console.log("connected as id " + connection.threadId + "\n");
-    
+
     userPrompts();
 });
 
 function userPrompts() {
+
     inquirer.prompt([{
         type: "list",
         name: "userPrompts",
@@ -43,16 +45,16 @@ function userPrompts() {
             viewAllEmployees();
         } else if (data.userPrompts === "View employees by department") {
             viewByDepartment();
-        } else if (data.userPrompts === "View employees by manager") {
-            viewByManager();
+        // } else if (data.userPrompts === "View employees by manager") {
+            // viewByManager();
         } else if (data.userPrompts === "Add a new employee") {
             addEmployee();
         } else if (data.userPrompts === "Delete an employee") {
             deleteEmployee();
         } else if (data.userPrompts === "Update employee role") {
             updateEmployeeRole();
-        } else if (data.userPrompts === "Update employee manager") {
-            updateManager();
+        // } else if (data.userPrompts === "Update employee manager") {
+        //     updateManager();
         } else {
             connection.end();
         }
@@ -61,13 +63,12 @@ function userPrompts() {
 
 function viewAllEmployees() {
     // view all employees => console.table all employees
-    connection.query("SELECT * FROM employees", function (err, res) {
+    connection.query("SELECT e2.firstName, e2.lastName, title, name, CONCAT(e1.firstName, ' ', e1.lastName) as 'manager' FROM employees e2 JOIN roles r ON e2.role_id=r.role_id JOIN departments d ON r.department_id=d.department_id INNER JOIN employees as e1 on e1.employee_id=e2.manager_id", function (err, res) {
         if (err) throw err;
         console.table(res);
-    //     console.log(res[i].firstName + " | " + res[i].lastName + " | " + res[i].role.title + " | " + res[i].departments.title +" | " + res[i].manager);
     })
-    // console.log("-----------------------------------");
-    
+
+
     userPrompts();
 };
 
@@ -109,25 +110,40 @@ function viewByDepartment() {
     });
 };
 
-function viewByManager() {
+// function viewByManager() {
     // view employees by manager => list all managers and then console.table all employees under that manager
+//     var manager = [];
+//     connection.query("SELECT CONCAT(firstName, ' ', lastName) as 'manager', employee_id FROM employees where employee_id in (SELECT distinct manager_id FROM employees)", function (err, res) {
+//         if (err) throw err;
+//         for (var i = 0; i < res.length; i++) {
+//             manager.push(res[i].employee_id + '. ' + res[i].manager)
+//         }
+//     }).then(function () {
+//         inquirer.prompt([{
+//             type: "list",
+//             name: "viewManager",
+//             message: "What manager would you like to view the employees of?",
+//             choices: manager
+//         }]).then(function (data) {
+//             connection.query("")
+//         })
+//     })
 
-    userPrompts();
-};
+//     userPrompts();
+// };
 
 function addEmployee() {
-    var manager =[];
+    var manager = [];
     connection.query("SELECT CONCAT(firstName, ' ', lastName) as 'manager', employee_id FROM employees where employee_id in (SELECT distinct manager_id FROM employees)", function (err, res) {
         if (err) throw err;
-        
-        for (var i=0; i<res.length; i++){
+        for (var i = 0; i < res.length; i++) {
             manager.push(res[i].employee_id + '. ' + res[i].manager)
         }
     });
     var roles = [];
     connection.query("SELECT DISTINCT roles.role_id, roles.title FROM  `roles` , employees WHERE roles.role_id = employees.role_id", function (err, res) {
         if (err) throw err;
-        for (var i=0; i<res.length; i++){
+        for (var i = 0; i < res.length; i++) {
             roles.push(res[i].role_id + '. ' + res[i].title)
         }
     });
@@ -154,14 +170,15 @@ function addEmployee() {
         var parsedRole = data.newEmployeeRole.split(".");
         var parsedManager = data.newEmployeeManager.split(".");
         connection.query("INSERT INTO employees SET ?", {
-            firstName: data.newEmployeeFirstName,
-            lastName: data.newEmployeeLastName,
-            role_id: parsedRole [0],
-            manager_id: parsedManager[0],
+                firstName: data.newEmployeeFirstName,
+                lastName: data.newEmployeeLastName,
+                role_id: parsedRole[0],
+                manager_id: parsedManager[0],
             },
             function (err) {
                 if (err) throw err;
                 console.log('employee added');
+                viewAllEmployees();
                 userPrompts();
             })
     })
@@ -170,17 +187,73 @@ function addEmployee() {
 function deleteEmployee() {
     // delete a employee => lists all employees so user can choice which to delete
 
-    userPrompts();
+    inquirer.prompt([{
+            name: "firstName",
+            type: "input",
+            message: "What is the first name of the employee you want to remove?"
+        },
+        {
+            name: "lastName",
+            type: "input",
+            message: "What is the last name of the employee you want to remove?"
+        }
+    ]).then(function (data) {
+
+        connection.query(
+            `DELETE FROM employees WHERE (firstName = "${data.firstName}" AND lastName="${data.lastName}")`,
+            function (err, res) {
+                if (err) throw err;
+                console.log("Employee removed successfully!");
+                viewAllEmployees();
+                userPrompts();
+            }
+
+        );
+
+    });
+
+
 };
 
 function updateEmployeeRole() {
-    // update employee role => list all employees and ask what role user would like to change the selected employee 
-
-    userPrompts();
+    var roles = [];
+    connection.query("SELECT DISTINCT roles.role_id, roles.title FROM  `roles` , employees WHERE roles.role_id = employees.role_id", function (err, res) {
+        if (err) throw err;
+        for (var i = 0; i < res.length; i++) {
+            roles.push(res[i].role_id + '. ' + res[i].title)
+        }
+    });
+    // add a new employee => ask for: first name, last name, role, manager, then update table and console.table()
+    inquirer.prompt([{
+            name: "firstName",
+            type: "input",
+            message: "What is the first name of the employee?"
+        },
+        {
+            name: "lastName",
+            type: "input",
+            message: "What is the last name of the employee?"
+        }, {
+            type: "list",
+            name: "role",
+            message: "What is the new role of the employee?",
+            choices: roles
+        }
+    ]).then(function (data) {
+        var parsedRole = data.role.split(".");
+        connection.query(`UPDATE employees SET role_id = "${parsedRole[0]}" WHERE (firstName = "${data.firstName}" AND lastName = "${data.lastName}")`,
+            function (err, res) {
+                if (err) throw err;
+                console.log("Employee updated successfully!");
+                viewAllEmployees();
+            }
+        );
+        userPrompts();
+    })
 };
 
-function updateManager() {
+// function updateManager() {
     // update employee manager => ask which employee user would like to change to a manager & list all employees 
 
-    userPrompts();
-};
+    // userPrompts();
+// };
