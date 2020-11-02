@@ -18,7 +18,7 @@ A command-line application that allows a user to view all employees, view employ
 Must have Node.js installed. Must install npm modules and packages associated with the app.
 
 ## Usage
-Run node server.js to start the application.
+Run node app.js to start the application.
 
 ## Contributing
 This project is open to contributions and suggestions.
